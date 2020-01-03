@@ -1,15 +1,15 @@
 <template>
   <div class="about">
-    <el-upload
-            action="https://jsonplaceholder.typicode.com/posts/"
-            list-type="picture-card"
-            :on-preview="handlePictureCardPreview"
-            :on-remove="handleRemove">
-      <i class="el-icon-plus"></i>
-    </el-upload>
-    <el-dialog :visible.sync="dialogVisible">
-      <img width="100%" :src="dialogImageUrl" alt="">
-    </el-dialog>
+<!--    <el-upload-->
+<!--            action="https://jsonplaceholder.typicode.com/posts/"-->
+<!--            list-type="picture-card"-->
+<!--            :on-preview="handlePictureCardPreview"-->
+<!--            :on-remove="handleRemove">-->
+<!--      <i class="el-icon-plus"></i>-->
+<!--    </el-upload>-->
+<!--    <el-dialog :visible.sync="dialogVisible">-->
+<!--      <img width="100%" :src="dialogImageUrl" alt="">-->
+<!--    </el-dialog>-->
     <uploader :options="options" class="uploader-example"
               ref="uploader"
               :autoStart="false"
@@ -17,7 +17,8 @@
               @file-added="onFileAdded"
               @file-success="onFileSuccess"
               @file-progress="onFileProgress"
-              @file-error="onFileError">
+              @file-error="onFileError"
+              @file-complete="onFileComplete">
       <uploader-unsupport></uploader-unsupport>
       <uploader-drop class="uploader-drop-box">
         <p>将文件拖到此处，或点击上传</p>
@@ -30,6 +31,13 @@
 <script>
   import {ACCEPT_CONFIG} from '@/config'
   import SparkMD5 from 'spark-md5'
+  import axios from 'axios'
+  import qs from 'qs'
+
+  const uploaderApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/uploadChunkFile";
+  const mergeApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/mergeFile";
+  const chunkSize = 10 * 1024 * 1000
+
   export default {
     data() {
       return {
@@ -43,20 +51,21 @@
           waiting: '等待中'
         },
         options: {
-          target: '/api/uploader',
+          target: uploaderApi,
           testChunks: true,
-          chunkSize: 10 * 1024 * 1000,
-
+          chunkSize: chunkSize,
           //服务器分片校验函数，秒传及断点续传基础
-          // checkChunkUploadedByResponse: function (chunk, message) {
-          //   console.log(chunk, 'checkChunkUploadedByResponse  step-2 &&');
-          //
-          //   let objMessage = JSON.parse(message);
-          //   if (objMessage.isExist) {
-          //     return true;
-          //   }
-          //   return (objMessage.uploaded || []).indexOf(chunk.offset + 1) >= 0
-          // },
+          checkChunkUploadedByResponse: function (chunk, message) {
+            console.log(chunk, 'checkChunkUploadedByResponse  step-2 &&');
+            console.log(message);
+            let objMessage = JSON.parse(message);
+            if (objMessage.isExist) {
+              return true;
+            }
+            return false
+            // return (objMessage.uploaded || []).indexOf(chunk.offset + 1) >= 0
+            // return true;
+          },
         },
         attrs: {
           accept: '*'
@@ -91,6 +100,20 @@
       },
       onFileError(){
         console.log('onFileError');
+      },
+      onFileComplete(){
+        console.log('file complete', arguments)
+
+        const file = arguments[0].file;
+        axios.post(mergeApi, qs.stringify({
+          chunkSize,
+          identifier: arguments[0].uniqueIdentifier,
+          totalSize: Math.floor(file.size/chunkSize),
+        })).then(function (response) {
+          console.log(response);
+        }).catch(function (error) {
+          console.log(error);
+        });
       },
       computeMD5(file) {
         let fileReader = new FileReader();
