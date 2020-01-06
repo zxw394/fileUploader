@@ -34,8 +34,12 @@
   import axios from 'axios'
   import qs from 'qs'
 
-  const uploaderApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/uploadChunkFile";
-  const mergeApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/mergeFile";
+  // const uploaderApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/uploadChunkFile";
+  // const mergeApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/mergeFile";
+
+
+  const uploaderApi = "/api/uploader";
+  const mergeApi = "/api/merge";
   const chunkSize = 10 * 1024 * 1000
 
   export default {
@@ -56,12 +60,14 @@
           chunkSize: chunkSize,
           //服务器分片校验函数，秒传及断点续传基础
           checkChunkUploadedByResponse: function (chunk, message) {
-            console.log(chunk, 'checkChunkUploadedByResponse  step-2 &&');
-            console.log(message);
-            let objMessage = JSON.parse(message);
-            if (objMessage.isExist) {
-              return true;
-            }
+            // console.log(chunk, 'checkChunkUploadedByResponse  step-2 &&');
+            // console.log(message);
+            // let objMessage = JSON.parse(message);
+            // if (objMessage.isExist) {
+            //   console.log(objMessage, "~~~ObjectMessage: true~~~~")
+            //   return true;
+            // }
+            // console.log(objMessage, "~~~ObjectMessage: false~~~~")
             return false
             // return (objMessage.uploaded || []).indexOf(chunk.offset + 1) >= 0
             // return true;
