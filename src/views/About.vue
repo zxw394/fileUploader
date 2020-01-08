@@ -28,11 +28,11 @@ import SparkMD5 from 'spark-md5'
 import axios from 'axios'
 import $ from 'jquery'
 
-// const uploaderApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/uploadChunkFile";
-// const mergeApi = "http://10.8.18.9:8080/rest/plm/v2/foundation/fileUpload/mergeFile";
+const uploaderApi = "http://10.8.18.9:8081/rest/plm/v2/foundation/fileUpload/uploadChunkFile";
+const mergeApi = "http://10.8.18.9:8081/rest/plm/v2/foundation/fileUpload/mergeFile";
 
-const uploaderApi = "/api/uploader";
-const mergeApi = "/api/merge";
+// const uploaderApi = "/api/uploader";
+// const mergeApi = "/api/merge";
 const chunkSize = 100 * 1024 * 1000
 
 export default {
@@ -49,13 +49,13 @@ export default {
             target: uploaderApi,
             testChunks: true,
             chunkSize,
-            // checkChunkUploadedByResponse: function (chunk, message) {//服务器分片校验函数，秒传及断点续传基础
-            //     let objMessage = JSON.parse(message);
-            //     if (objMessage.isExist) {
-            //         return true;
-            //     }
-            //     return (objMessage.uploaded || []).indexOf(+chunk.offset + 1 + '') >= 0
-            // },
+            checkChunkUploadedByResponse: function (chunk, message) {//服务器分片校验函数，秒传及断点续传基础
+                let objMessage = JSON.parse(message);
+                if (objMessage.isExist) {
+                    return true;
+                }
+                return (objMessage.uploaded || []).indexOf(+chunk.offset + 1 + '') >= 0
+            },
         },
         attrs: {
           accept: '*'
@@ -121,6 +121,9 @@ export default {
                     currentChunk++;
                     //获取当前上传片的md5信息
                     // let md5 = SparkMD5.ArrayBuffer.hash(e.target.result);
+                    this.$nextTick(() => {
+                        $(`.myStatus_${file.id}`).text('校验MD5中...'+ ((currentChunk/chunks)*100).toFixed(0)+'%')
+                    })
                     loadNext();
                 } else {
                     let md5 = spark.end();
@@ -141,7 +144,7 @@ export default {
             //校验完毕，删除提示'校验中'
             this.statusRemove(file.id);
             displayResumeBtn(file.id);
-            
+
             file.uniqueIdentifier = md5;
             file.resume();
         },
